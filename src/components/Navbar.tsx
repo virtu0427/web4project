@@ -3,6 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, Heart, LogOut, Menu, X, Home, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+declare global {
+  interface Window {
+    Kakao: any;
+  }
+}
+
 export default function Navbar() {
   const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
@@ -13,7 +19,32 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
+    // 카카오 로그아웃 처리
+    if (window.Kakao) {
+      // 카카오 로그아웃 API 호출
+      window.Kakao.Auth.logout(() => {
+        console.log("카카오 로그아웃 성공");
+      });
+
+      // 카카오 토큰 삭제
+      window.Kakao.Auth.setAccessToken('');
+
+      // 로컬 스토리지 및 세션 스토리지에서 카카오 정보 삭제
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('currentUser');
+
+      sessionStorage.removeItem('isAuthenticated');
+      sessionStorage.removeItem('currentUser');
+
+      // 쿠키에서 카카오 관련 데이터 삭제
+      document.cookie = 'KakaoTalk_user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+      document.cookie = 'KakaoTalk_access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+    }
+
+    // 앱 로그아웃 처리
     logout();
+    // 화면을 새로 고침하여 카카오 로그인 세션을 초기화
+    window.location.reload();
     navigate('/signin');
     setIsMenuOpen(false);
   };
